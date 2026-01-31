@@ -19,9 +19,22 @@ services:
       dockerfile: docker/db/Dockerfile
     environment:
       MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: fuelphp
+      MYSQL_DATABASE: alphaaa_database
     ports:
       - "3306:3306"
+    networks:
+      - fuelphp-network
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: fuelphp-phpmyadmin
+    restart: always
+    ports:
+      - "8080:80"
+    environment:
+      PMA_HOST: db
+      PMA_USER: root
+      PMA_PASSWORD: root
     networks:
       - fuelphp-network
 

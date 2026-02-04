@@ -1,43 +1,72 @@
 <?php
-
-class Model_IdeaSelection extends \Orm\Model
+/**
+ * ネタデータの操作を行うモデル（DBクラス使用）
+ */
+class Model_IdeaSelection extends \Model
 {
-    protected static $_table_name = 'idea_selections';
+  /**
+   * ユーザーIDに紐づくネタ一覧を取得
+   */
+  public static function get_by_user_id($user_id)
+  {
+    $result = \DB::select()
+      ->from('idea_selections')
+      ->where('user_id', '=', $user_id)
+      ->order_by('created_at', 'desc')
+      ->execute()
+      ->as_array();
+    
+    return $result;
+  }
 
-    protected static $_primary_key = array('id');
+  /**
+   * 単一のネタを取得（編集・削除権限チェック用）
+   */
+  public static function get_by_id($id)
+  {
+    return \DB::select()
+      ->from('idea_selections')
+      ->where('id', '=', (int)$id)
+      ->execute()
+      ->current();
+  }
 
-    protected static $_properties = array(
-        'id' => array(
-            'data_type' => 'int',
-            'label' => 'ID',
-            'primary' => true,
-            'auto_inc' => true,
-        ),
-        'user_id',
-        'idea_text',
-        'is_favorite',
-        'created_at',
-        'updated_at',
-    );
+  /**
+   * 新規保存
+   */
+  public static function insert_idea($data)
+  {
+    // 規約に基づき、timestampは手動で設定
+    $data['created_at'] = date('Y-m-d H:i:s');
+    $data['updated_at'] = date('Y-m-d H:i:s');
 
-    protected static $_belongs_to = array(
-        'user' => array(
-            'model_to' => 'Model_User',
-            'key_from' => 'user_id',
-            'key_to'   => 'id',
-            'cascade_save' => false,
-            'cascade_delete' => false,
-        ),
-    );
+    list($insert_id, $rows_affected) = \DB::insert('idea_selections')
+      ->set($data)
+      ->execute();
+    
+    return $insert_id;
+  }
 
-    protected static $_observers = array(
-        'Orm\\Observer_CreatedAt' => array(
-            'events' => array('before_insert'),
-            'mysql_timestamp' => true,
-        ),
-        'Orm\\Observer_UpdatedAt' => array(
-            'events' => array('before_save'),
-            'mysql_timestamp' => true,
-        ),
-    );
+  /**
+   * 更新（編集・お気に入り）
+   */
+  public static function update_idea($id, $data)
+  {
+    $data['updated_at'] = date('Y-m-d H:i:s');
+
+    return \DB::update('idea_selections')
+      ->set($data)
+      ->where('id', '=', (int)$id)
+      ->execute();
+  }
+
+  /**
+   * 削除
+   */
+  public static function delete_idea($id)
+  {
+    return \DB::delete('idea_selections')
+      ->where('id', '=', $id)
+      ->execute();
+  }
 }

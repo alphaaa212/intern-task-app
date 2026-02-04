@@ -5,5 +5,7 @@ return array(
 	
 	'hello(/:name)?' => array('welcome/hello', 'name' => 'hello'),
 
-	"home" => 'home/index',
+	'register' => 'auth/register',
+	// 'register' => 'auth/submit',
+	'login' => 'auth/login',
 );

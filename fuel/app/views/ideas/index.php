@@ -1,162 +1,239 @@
+<h1>テスト表示</h1>
+
 <?php echo \Asset::js('jquery.min.js'); ?>
 <?php echo \Asset::js('knockout.js'); ?>
 
 <style>
-  .ideas-container { margin-top: 20px; }
-  .page-title { margin-bottom: 20px; }
-  .action-bar { margin-bottom: 20px; }
-  .idea-item { 
-    margin-bottom: 15px; 
+  .page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+  }
+
+  .page-title { margin: 0; font-size: 1.5rem; }
+
+  /* 操作バー */
+  .action-bar {
+    background: #fff;
     padding: 15px;
-    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+  }
+
+  /* ネタカード */
+  .idea-item {
+    background: #fff;
+    margin-bottom: 12px;
+    padding: 20px;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .idea-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  }
+
+  .idea-main {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    flex: 1;
+  }
+
+  .favorite-icon {
+    font-size: 1.4rem;
+    cursor: pointer;
+    user-select: none;
+    transition: scale 0.2s;
+  }
+  .favorite-icon:hover { scale: 1.2; }
+  .is-fav { color: #fbc02d; }
+  .not-fav { color: #cbd5e1; }
+
+  .idea-text {
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: #1e293b;
+    margin: 0;
+  }
+
+  /* ボタン類 */
+  .btn {
+    padding: 8px 16px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.875rem;
+    transition: all 0.2s;
+  }
+  .btn-primary { background: #3498db; color: #fff; text-decoration: none; }
+  .btn-primary:hover { background: #2980b9; }
+  
+  .btn-outline { background: transparent; border: 1px solid #e2e8f0; color: #64748b; }
+  .btn-outline.active { background: #64748b; color: #fff; }
+
+  .btn-sm { padding: 4px 10px; font-size: 0.75rem; }
+  .btn-save { background: #2ecc71; color: #fff; }
+  .btn-danger { color: #e74c3c; }
+
+  .edit-input {
+    width: 100%;
+    padding: 8px;
+    border: 2px solid #3498db;
     border-radius: 4px;
+    outline: none;
   }
-  .idea-text-wrapper { margin-bottom: 0; }
-  .favorite-icon { 
-    margin-right: 10px; 
-    cursor: pointer; 
+
+  .empty-state {
+    text-align: center;
+    padding: 60px;
+    color: #94a3b8;
+    background: #fff;
+    border-radius: 8px;
+    border: 2px dashed #e2e8f0;
   }
-  .text-favorite { color: #ffc107; }
 </style>
 
-<div class="ideas-container">
+<div id="ideas-app">
+<div class="page-header">
   <h2 class="page-title">保存したネタ一覧</h2>
-
-  <div class="action-bar d-flex justify-content-between align-items-center">
-    <a href="<?php echo \Uri::create('ideas/create'); ?>" class="btn btn-primary">
-      + 手動でネタを追加する
-    </a>
+  <?php echo Html::anchor('ideas/create', '+ 手動で追加', ['class' => 'btn btn-primary']); ?>
+</div>
     
-    <div class="btn-group">
-      <button class="btn btn-outline-secondary" data-bind="click: function(){ filterMode('all') }, css: { active: filterMode() == 'all' }">すべて</button>
-      <button class="btn btn-outline-warning" data-bind="click: function(){ filterMode('fav') }, css: { active: filterMode() == 'fav' }">★お気に入り</button>
+<div class="action-bar">
+  <div class="filter-group">
+    <button class="btn btn-outline" data-bind="click: () => filterMode('all'), css: { active: filterMode() === 'all' }">すべて</button>
+    <button class="btn btn-outline" data-bind="click: () => filterMode('fav'), css: { active: filterMode() === 'fav' }">★ お気に入り</button>
+  </div>
+  <div class="stats-text">
+    全 <span data-bind="text: ideas().length"></span> 件
     </div>
   </div>
 
-  <?php if (empty($ideas)): ?>
-    <div class="alert alert-warning">
-      まだネタが登録されていません。新しいアイデアをストックしましょう！
+<div class="empty-state">
+  <p>まだネタが登録されていません。新しいアイデアをストックしましょう！</p>
     </div>
-  <?php else: ?>
     <div class="ideas-list" data-bind="foreach: filteredIdeas">
-      <div class="idea-item shadow-sm">
-        
-        <div data-bind="ifnot: isEditing">
-          <div class="d-flex w-100 justify-content-between align-items-center">
-            <h5 class="idea-text-wrapper text-primary">
-              <span class="favorite-icon text-favorite" data-bind="click: $parent.toggleFav, text: is_favorite() ? '★' : '☆'"></span>
-              <span data-bind="text: idea_text"></span>
-            </h5>
-            <div class="button-group">
-              <button class="btn btn-sm btn-outline-info" data-bind="click: function(){ isEditing(true) }">編集</button>
-              <button class="btn btn-sm btn-outline-danger" data-bind="click: $parent.deleteIdea">削除</button>
+  <div class="idea-item">
+    <div data-bind="ifnot: isEditing" style="display: flex; justify-content: space-between; align-items: center;">
+      <div class="idea-main">
+        <span class="favorite-icon" data-bind="click: $parent.toggleFav, text: is_favorite() ? '★' : '☆', css: is_favorite() ? 'is-fav' : 'not-fav'"></span>
+        <p class="idea-text" data-bind="text: idea_text"></p>
             </div>
+      <div class="idea-actions">
+        <button class="btn btn-outline btn-sm" data-bind="click: () => isEditing(true)">編集</button>
+        <button class="btn btn-danger btn-sm" data-bind="click: $parent.deleteIdea">削除</button>
           </div>
         </div>
 
         <div data-bind="if: isEditing">
-          <div class="input-group">
-            <input type="text" class="form-control" data-bind="value: idea_text">
-            <div class="input-group-append">
-              <button class="btn btn-success" data-bind="click: $parent.saveEdit">保存</button>
-              <button class="btn btn-secondary" data-bind="click: function(){ isEditing(false) }">戻る</button>
-            </div>
-          </div>
+      <div style="display: flex; gap: 10px;">
+        <input type="text" class="edit-input" data-bind="value: idea_text">
+        <button class="btn btn-save" data-bind="click: $parent.saveEdit">保存</button>
+        <button class="btn btn-outline" data-bind="click: () => isEditing(false)">戻る</button>
         </div>
-        
       </div>
     </div>
-  <?php endif; ?>
+  </div>
 </div>
 
 <script>
 $(function() {
-  function IdeaViewModel(rawIdeas) {
-    var self = this;
+  // PHPからデータを取得
+  const dataFromPhp = <?php echo $ideas_json ?? '[]'; ?>;
+  console.log("Debug Data:", dataFromPhp);
 
-    // セキュリティ設定
-    var csrf_key = '<?php echo \Config::get('security.csrf_token_key', 'fuel_csrf_token'); ?>';
-    var current_csrf_token = '<?php echo \Security::fetch_token(); ?>';
+  const IdeaViewModel = function(rawIdeas) {
+    const self = this;
 
-    self.updateCsrfToken = function(response) {
+    // CSRF設定
+    const csrfKey = '<?php echo \Config::get('security.csrf_token_key', 'fuel_csrf_token'); ?>';
+    // 【修正】初期トークンを正しく変数に格納
+    let currentCsrfToken = '<?php echo \Security::fetch_token(); ?>';
+
+    const updateCsrfToken = (response) => {
       if (response && response.new_token) {
-        current_csrf_token = response.new_token;
+        currentCsrfToken = response.new_token;
       }
     };
 
-    // データの初期化
-    self.ideas = ko.observableArray(rawIdeas.map(function(item) {
-      return {
+    self.ideas = ko.observableArray(rawIdeas.map(item => ({
         id: Number(item.id),
         idea_text: ko.observable(item.idea_text),
         is_favorite: ko.observable(String(item.is_favorite) === '1'),
         isEditing: ko.observable(false)
-      };
-    }));
+    })));
 
     self.filterMode = ko.observable('all');
 
-    // フィルタリング
-    self.filteredIdeas = ko.computed(function() {
-      var mode = self.filterMode();
-      if (mode === 'all') return self.ideas();
-      return self.ideas().filter(function(i) { 
-        return i.is_favorite(); 
-      });
+    self.filteredIdeas = ko.computed(() => {
+      const mode = self.filterMode();
+      return mode === 'all' ? self.ideas() : self.ideas().filter(i => i.is_favorite());
     });
 
-    self.toggleFav = function(item) {
+    self.toggleFav = (item) => {
       item.is_favorite(!item.is_favorite());
       self.sendUpdate(item);
     };
 
-    self.saveEdit = function(item) {
+    self.saveEdit = (item) => {
       self.sendUpdate(item);
       item.isEditing(false);
     };
 
-    // 通信処理
-    self.sendUpdate = function(item) {
-      var post_data = {
+    /**
+     * 更新リクエスト
+     */
+    self.sendUpdate = (item) => {
+      const postData = {
         id: item.id,
         idea_text: item.idea_text(),
         is_favorite: item.is_favorite() ? 1 : 0
       };
-      post_data[csrf_key] = current_csrf_token;
+      postData[csrfKey] = currentCsrfToken;
 
-      $.post('<?php echo \Uri::create("ideas/save"); ?>', post_data)
-        .done(function(res) {
-          self.updateCsrfToken(res);
-        })
-        .fail(function(xhr) { 
-          if (xhr.responseJSON) self.updateCsrfToken(xhr.responseJSON);
+      $.post('<?php echo \Uri::create("ideas/save"); ?>', postData)
+        .done(res => updateCsrfToken(res))
+        .fail(xhr => {
+          if (xhr.responseJSON) updateCsrfToken(xhr.responseJSON);
           alert('保存に失敗しました。'); 
         });
     };
 
-    self.deleteIdea = function(item) {
-      if (!confirm('本当に削除しますか？')) {
-        return;
-      }
-      
-      var delete_data = { 
-        id: item.id 
-      };
-      delete_data[csrf_key] = current_csrf_token;
+    /**
+     * 削除リクエスト
+     */
+    self.deleteIdea = (item) => {
+      if (!confirm('このネタを削除してもよろしいですか？')) return;
 
-      $.post('<?php echo \Uri::create("ideas/delete"); ?>', delete_data)
-          .done(function(res) { 
-          self.updateCsrfToken(res);
+      const deleteData = { id: item.id };
+      deleteData[csrfKey] = currentCsrfToken;
+
+      $.post('<?php echo \Uri::create("ideas/delete"); ?>', deleteData)
+        .done(res => {
+          updateCsrfToken(res);
           self.ideas.remove(item);
           })
-          .fail(function(xhr) { 
-          if (xhr.responseJSON) self.updateCsrfToken(xhr.responseJSON);
+        .fail(xhr => {
+          if (xhr.responseJSON) updateCsrfToken(xhr.responseJSON);
           alert('削除に失敗しました。');
           });
     };
-  }
+  };
 
-  var dataFromPhp = <?php echo $ideas_json ?? '[]'; ?>;
-  ko.applyBindings(new IdeaViewModel(dataFromPhp));
+  // 【重要】HTML側に id="ideas-app" があることを確認してバインド
+  const el = document.getElementById('ideas-app');
+  if (el) {
+    ko.applyBindings(new IdeaViewModel(dataFromPhp), el);
+  } else {
+    console.error("Element #ideas-app not found!");
+  }
 });
 </script>

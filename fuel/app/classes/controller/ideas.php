@@ -42,7 +42,7 @@ class Controller_Ideas extends Controller_Base
   }
 
   /**
-   * 新規作成画面
+   * ネタの手動追加画面
    * GET: /ideas/create
    */
   public function action_create()
@@ -52,7 +52,7 @@ class Controller_Ideas extends Controller_Base
   }
 
   /**
-   * 新規作成処理
+   * ネタの手動追加処理
    * POST: /ideas/create
    * action_xxxではなくpost_xxxで処理を分離
    */
@@ -111,10 +111,10 @@ class Controller_Ideas extends Controller_Base
     $user_auth_info = \Auth::get_user_id();
     $user_id = $user_auth_info[1];
 
-    foreach ($post_ideas as $text) {
+    foreach ($post_ideas as $idea_text) {
       $insert_data = [
         'user_id'     => $user_id,
-        'idea_text'   => (string) $text,
+        'idea_text'   => (string) $idea_text,
         'is_favorite' => 0,
       ];
       
@@ -137,17 +137,20 @@ class Controller_Ideas extends Controller_Base
     }
 
     $target_id = (int) \Input::post('id');
-    $idea_record = Model_IdeaSelection::get_by_ideaId($target_id);
+    $idea_record = Model_IdeaSelection::getIdea_by_ideaId($target_id);
     $user_auth_info = \Auth::get_user_id();
     $user_id = $user_auth_info[1];
 
-    // 本人のデータかチェック（早期リターン）
+    // 本人のデータかチェック
+      // $idea_recordが存在しないか、ログインユーザーとアイデアのユーザーが一致しない場合
     if (!$idea_record || (int) $idea_record['user_id'] !== (int) $user_id) {
       return $this->ajax_response(['status' => 'error'], 403);
     }
 
     $update_params = [
       'idea_text'   => (string) \Input::post('idea_text'),
+
+      // is_favoriteが1かtrueなら
       'is_favorite' => (\Input::post('is_favorite') === '1' || \Input::post('is_favorite') === 'true') ? 1 : 0,
     ];
 
@@ -179,7 +182,7 @@ class Controller_Ideas extends Controller_Base
   }
 
   /**
-   * 生成画面
+   * 思考整理画面
    * GET: /ideas/generate
    */
   public function action_generate()

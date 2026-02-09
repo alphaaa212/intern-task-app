@@ -31,33 +31,60 @@ $(function () {
     });
 
     /**
-     * AIネタ生成（シミュレーション）
+     * Gemini AIネタ生成（サーバー経由でAPI呼び出し）
      */
     self.generateIdeas = () => {
       const trimmedInput = self.rawInput().trim();
       if (!trimmedInput) return;
 
+      // 状態を「生成中」にする
       self.isGenerating(true);
-      self.generatedIdeas([]); // リセット
+      self.generatedIdeas([]); // 以前の結果をクリア
 
-      // 擬似的な生成待ち演出
-      setTimeout(() => {
-        const inputSnippet = trimmedInput.substring(0, 10);
-        const suggestionTemplates = [
-          `【漫才】「${inputSnippet}」の絶妙な違和感`,
-          `【コント】自称「${inputSnippet}」の達人`,
-          `【エッセイ】なぜ現代人は「${inputSnippet}」に惹かれるのか`,
-          `【大喜利】「${inputSnippet}」を100倍楽しくする方法`,
-          `【短編】「${inputSnippet}」から始まる物語`,
-        ];
+      // サーバー側の post_api_generate メソッドに送信
+      const payload = {
+        user_input: trimmedInput,
+        fuel_csrf_token: window.AppConfig.csrfToken,
+      };
 
-        const mappedIdeas = suggestionTemplates.map(
-          (template) => new IdeaItemModel(template),
-        );
+      $.post(window.AppConfig.endpoints.generateApi, payload)
+        .done((res) => {
+          // 成功時もトークンを更新
+          if (res.new_token) window.AppConfig.csrfToken = res.new_token;
+          if (res.status === "success" && res.ideas) {
+            // 返ってきたネタ（配列）をModelに変換してセット
+            const mappedIdeas = res.ideas.map(
+              (text) => new IdeaItemModel(text),
+            );
+            self.generatedIdeas(mappedIdeas);
+          } else {
+            alert(
+              "ネタの生成に失敗しました: " + (res.message || "不明なエラー"),
+            );
+          }
+        })
+        .fail((xhr) => {
+          // 失敗時もトークンを更新
+          const res = xhr.responseJSON;
+          if (res && res.new_token) window.AppConfig.csrfToken = res.new_token;
 
-        self.generatedIdeas(mappedIdeas);
-        self.isGenerating(false);
-      }, 800);
+          console.error("--- API Error Details ---");
+          if (res && res.debug_info) {
+            console.log("HTTP Status:", res.debug_info.http_code);
+            console.log("CURL Error:", res.debug_info.curl_error);
+            console.log("Google Response:", res.debug_info.google_response);
+          } else {
+            console.dir(xhr);
+          }
+          console.error("-------------------------");
+
+          alert(
+            "通信エラーが発生しました。コンソール(F12)を確認してください。",
+          );
+        })
+        .always(() => {
+          self.isGenerating(false);
+        });
     };
 
     /**
@@ -84,6 +111,7 @@ $(function () {
             idea.isEditing(false);
           });
           alert("ネタを保存しました！");
+          // マイネタ一覧へ遷移
           window.location.href = window.AppConfig.endpoints.redirectUrl;
         })
         .fail(() => {
@@ -95,7 +123,7 @@ $(function () {
     };
   };
 
-  // バインディングの開始
+  // Knockout.jsのバインディング開始
   const container = document.getElementById("generate-app");
   if (container) {
     ko.applyBindings(new IdeaGenerateViewModel(), container);

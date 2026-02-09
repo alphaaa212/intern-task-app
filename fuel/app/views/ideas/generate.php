@@ -69,6 +69,7 @@
   // PHPからの動的変数をJSに渡すためのブリッジ（ここだけViewに残すのが一般的です）
   window.AppConfig = {
     endpoints: {
+      generateApi: '<?php echo \Uri::create("ideas/api_generate"); ?>',
       saveIdeas: '<?php echo \Uri::create("ideas/add_bulk"); ?>',
       redirectUrl: '<?php echo \Uri::create("ideas/index"); ?>'
     },

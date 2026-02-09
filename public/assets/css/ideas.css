@@ -1,0 +1,140 @@
+/* 共通ユーティリティ（規約に従い小文字・半角2文字） */
+.flex {
+  display: flex;
+}
+.justify-between {
+  justify-content: space-between;
+}
+.items-center {
+  align-items: center;
+}
+.mt20 {
+  margin-top: 20px;
+}
+.gap8 {
+  gap: 8px;
+}
+.gap10 {
+  gap: 10px;
+}
+.gap15 {
+  gap: 15px;
+}
+
+/* ページ構成要素 */
+.page-header {
+  margin-bottom: 30px;
+}
+
+.page-title {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.action-bar {
+  background-color: #ffffff;
+  padding: 15px;
+  border-radius: 8px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+/* ネタカード */
+.idea-item {
+  background-color: #ffffff;
+  margin-bottom: 12px;
+  padding: 20px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  transition:
+    transform 0.2s,
+    box-shadow 0.2s;
+}
+
+.idea-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.favorite-icon {
+  font-size: 1.4rem;
+  cursor: pointer;
+  user-select: none;
+  transition: transform 0.2s;
+}
+
+.favorite-icon:hover {
+  transform: scale(1.2);
+}
+
+.is-fav {
+  color: #fbc02d;
+}
+.not-fav {
+  color: #cbd5e1;
+}
+
+.idea-text {
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: #1e293b;
+  margin: 0;
+}
+
+/* ボタン */
+.btn {
+  padding: 8px 16px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.875rem;
+  transition: all 0.2s;
+  display: inline-block;
+}
+
+.btn-primary {
+  background-color: #3498db;
+  color: #ffffff;
+  text-decoration: none;
+}
+
+.btn-outline {
+  background-color: transparent;
+  border: 1px solid #e2e8f0;
+  color: #64748b;
+}
+
+.btn-outline.active {
+  background-color: #64748b;
+  color: #ffffff;
+}
+
+.btn-sm {
+  padding: 4px 10px;
+  font-size: 0.75rem;
+}
+.btn-save {
+  background-color: #2ecc71;
+  color: #ffffff;
+}
+.btn-danger {
+  color: #e74c3c;
+  background: transparent;
+}
+
+.edit-input {
+  flex: 1;
+  padding: 8px;
+  border: 2px solid #3498db;
+  border-radius: 4px;
+  outline: none;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 60px;
+  color: #94a3b8;
+  background-color: #ffffff;
+  border-radius: 8px;
+  border: 2px dashed #e2e8f0;
+}

@@ -1,0 +1,155 @@
+.page-subtitle {
+  color: #64748b;
+  margin-top: 5px;
+}
+
+.generate-input-container {
+  background-color: #ffffff;
+  padding: 20px;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  margin-bottom: 30px;
+}
+
+.generate-textarea {
+  width: 100%;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 15px;
+  font-size: 1rem;
+  resize: vertical;
+  box-sizing: border-box;
+  margin-bottom: 15px;
+}
+
+.generate-textarea:focus {
+  border-color: #3498db;
+  outline: none;
+}
+
+.btn-large {
+  width: 100%;
+  padding: 15px;
+  font-size: 1.1rem;
+}
+
+.section-title {
+  font-size: 1.2rem;
+  margin-bottom: 15px;
+  color: #2c3e50;
+}
+
+.generated-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 120px;
+}
+
+.generated-item {
+  background-color: #ffffff;
+  padding: 12px 20px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  transition: all 0.2s;
+}
+
+.generated-item.is-selected {
+  border-color: #3498db;
+  background-color: #f0f9ff;
+}
+
+.generated-item.is-saved {
+  opacity: 0.6;
+  background-color: #f8fafc;
+}
+
+.generated-item.is-editing {
+  border-color: #3498db;
+  background-color: #ffffff;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.item-main-row {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  min-height: 44px;
+}
+
+.checkbox-wrapper {
+  display: flex;
+  align-items: center;
+}
+
+.item-checkbox {
+  width: 22px;
+  height: 22px;
+  cursor: pointer;
+}
+
+.text-container {
+  flex: 1;
+  overflow: hidden;
+}
+
+.item-text {
+  font-size: 1.05rem;
+  font-weight: 500;
+  color: #1e293b;
+  line-height: 1.4;
+  display: block;
+}
+
+.edit-field {
+  width: 100%;
+  padding: 6px 10px;
+  border: 2px solid #3498db;
+  border-radius: 6px;
+  font-size: 1rem;
+  box-sizing: border-box;
+}
+
+.item-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-shrink: 0;
+  width: 70px;
+}
+
+.btn-sm {
+  padding: 4px 12px;
+  font-size: 0.8rem;
+}
+
+.btn-save {
+  background-color: #3498db;
+  color: #ffffff;
+}
+
+.badge-success {
+  background-color: #2ecc71;
+  color: #ffffff;
+  font-size: 0.75rem;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-weight: bold;
+}
+
+.floating-actions {
+  position: fixed;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 400px;
+  padding: 0 20px;
+  box-sizing: border-box;
+  z-index: 100;
+}
+
+.shadow {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}

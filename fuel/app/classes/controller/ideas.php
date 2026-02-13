@@ -1,12 +1,26 @@
 <?php
 class Controller_Ideas extends Controller_Base
 {
+    protected $user_id;
+
   /**
+   * アクション実行前の共通処理
+   */
+    public function before()
+    {
+    parent::before();
+    // 親クラス(Base)で取得済みのIDを利用
+    $this->user_id = $this->current_user ? $this->current_user->id : null;
+    }
+
+
+      /**
    * JSONレスポンスの共通処理
    * @param array $data ブラウザへ返したいデータ本体
    * @param int $status HTTPステータスコード（成功:200、エラー:400など）
    * @return \Response 整形済みのレスポンスオブジェクト
    */
+
   private function ajax_response($data = [], $status = 200)
   {
     // 次の送信で用いるトークンを生成
@@ -23,22 +37,13 @@ class Controller_Ideas extends Controller_Base
    */
   public function action_index()
   {
-    // Authクラスを使用してログインユーザーIDを取得
-    $user_auth_info = \Auth::get_user_id();
-    $user_id = $user_auth_info[1];
-
-    // ideaselection.phpで返された$resultを新しく定義した変数$ideasに代入
-    $ideas = Model_IdeaSelection::getIdeas_by_user_id($user_id);
-
+        $ideas = Model_IdeaSelection::get_ideas_by_user_id($this->user_id);
 
     $this->template->title = 'マイネタ一覧';
     $this->template->content = \View::forge('ideas/index');
-    
-    // データの整形
-    $ideas_json = json_encode($ideas);
 
     // エンコーディングはoff（そのままideas/index.phpに読み込ませる）
-    $this->template->content->set('ideas_json', $ideas_json, false);
+    $this->template->content->set('ideas_json', json_encode($ideas), false);
   }
 
   /**
@@ -73,17 +78,15 @@ class Controller_Ideas extends Controller_Base
       return \Response::redirect('ideas/create');
     }
 
-    $user_auth_info = \Auth::get_user_id();
-    $insert_data = [
-      'user_id'     => $user_auth_info[1],
+    $res = Model_IdeaSelection::insert_idea([
+      'user_id'     => $this->user_id,
       // バリデートに成功したフィールド(idea_text)と値(手動で追加しようとしているネタの名前)を取得する
         'idea_text'   => $val->validated('idea_text'),
         // お気に入りはデフォルトでoffにする
         'is_favorite' => 0,
-      ];
+    ]);
 
-    // Modelのメソッド（insert）を使用して保存
-    if (!Model_IdeaSelection::insert_idea($insert_data)) {
+    if (!$res) {
       \Session::set_flash('error', '保存に失敗しました。');
       return \Response::redirect('ideas/create');
       }
@@ -108,12 +111,10 @@ class Controller_Ideas extends Controller_Base
     }
 
     $success_count = 0;
-    $user_auth_info = \Auth::get_user_id();
-    $user_id = $user_auth_info[1];
 
     foreach ($post_ideas as $idea_text) {
       $insert_data = [
-        'user_id'     => $user_id,
+        'user_id'     => $this->user_id,
         'idea_text'   => (string) $idea_text,
         'is_favorite' => 0,
       ];
@@ -137,13 +138,11 @@ class Controller_Ideas extends Controller_Base
     }
 
     $target_id = (int) \Input::post('id');
-    $idea_record = Model_IdeaSelection::getIdea_by_ideaId($target_id);
-    $user_auth_info = \Auth::get_user_id();
-    $user_id = $user_auth_info[1];
+    $idea_record = Model_IdeaSelection::get_idea_by_ideaId($target_id);
 
     // 本人のデータかチェック
       // $idea_recordが存在しないか、ログインユーザーとアイデアのユーザーが一致しない場合
-    if (!$idea_record || (int) $idea_record['user_id'] !== (int) $user_id) {
+    if (!$idea_record || (int) $idea_record['user_id'] !== (int) $this->user_id) {
       return $this->ajax_response(['status' => 'error'], 403);
     }
 
@@ -169,11 +168,9 @@ class Controller_Ideas extends Controller_Base
     }
 
     $target_id = (int) \Input::post('id');
-    $idea_record = Model_IdeaSelection::getIdea_by_ideaId($target_id);
-    $user_auth_info = \Auth::get_user_id();
-    $user_id = $user_auth_info[1];
+    $idea_record = Model_IdeaSelection::get_idea_by_ideaId($target_id);
 
-    if (!$idea_record || (int) $idea_record['user_id'] !== (int) $user_id) {
+    if (!$idea_record || (int) $idea_record['user_id'] !== (int) $this->user_id) {
       return $this->ajax_response(['status' => 'error'], 403);
     }
 
@@ -189,5 +186,33 @@ class Controller_Ideas extends Controller_Base
   {
     $this->template->title = 'ネタ生成';
     $this->template->content = \View::forge('ideas/generate');
+  }
+
+  /**
+   * Gemini AIによるネタ生成 (AJAX)
+   * POST: /ideas/api_generate
+   */
+  /**
+   * Gemini AIによるネタ生成 (AJAX)
+      */
+  public function post_api_generate()
+  {
+        if (!\Security::check_token()) {
+            return $this->ajax_response(['status' => 'error', 'message' => 'セッション切れ'], 400);
+    }
+
+    $user_input = trim((string)\Input::post('user_input'));
+    if (empty($user_input)) {
+      return $this->ajax_response(['status' => 'error', 'message' => '入力が空です'], 400);
+    }
+
+    try {
+            $ideas = Service_Gemini::generate_ideas($user_input);
+            return $this->ajax_response(['status' => 'success', 'ideas' => $ideas]);
+        } catch (\Exception $e) {
+      // エラーメッセージをログに残しつつ、ユーザーに通知
+      \Log::error('Gemini API Error: ' . $e->getMessage());
+      return $this->ajax_response(['status' => 'error', 'message' => 'AI通信に失敗しました'], 500);
+}
   }
 }

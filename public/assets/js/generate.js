@@ -1,103 +1,133 @@
+// ページの読み込みが終わってから実行(jQuery)
 $(function () {
   /**
    * 生成された各ネタのデータモデル
    */
-  const IdeaItemModel = function (textStr) {
+  // タイトルの文字列61行目のtextがtextStrに代入される
+  const IdeaItemModel = function (idea_text_str) {
+    // self = 生成されたネタ一行分のオブジェクト
     const self = this;
-    // 編集可能な項目はobservable
-    self.text = ko.observable(textStr);
-    self.isChecked = ko.observable(false);
-    self.isSaved = ko.observable(false);
-    self.isEditing = ko.observable(false);
+    // observableを用いることで、値が変わったら画面にも反映させる
+    self.text = ko.observable(idea_text_str); //ネタの文章
+    self.isChecked = ko.observable(false); // チェックが入っているか
+    self.isSaved = ko.observable(false); //保存されたか
+    self.isEditing = ko.observable(false); //今、編集中か
   };
 
   /**
    * メインViewModel
    */
   const IdeaGenerateViewModel = function () {
+    // self = アプリ全体の動きを管理する ViewModel（頭脳）自体
     const self = this;
 
-    // 状態管理
-    self.rawInput = ko.observable("");
-    self.isGenerating = ko.observable(false);
-    self.isSaving = ko.observable(false);
-    self.generatedIdeas = ko.observableArray([]);
+    // ---  画面全体の「状態」を管理する変数 ---
+    self.rawInput = ko.observable(""); //ユーザーの入力内容
+    self.isGeneratingStatus = ko.observable(false); //生成通信中フラグ
+    self.isSavingStatus = ko.observable(false); //保存通信中フラグ
+    self.generatedIdeasList = ko.observableArray([]); //生成されたネタのリスト
 
-    // 算出プロパティ: チェックされた未保存のネタがあるか
+    // 算出プロパティ: チェック済みかつ未保存のネタが1つでもあるか
     self.hasCheckedIdeas = ko.computed(() => {
       return self
-        .generatedIdeas()
-        .some((idea) => idea.isChecked() && !idea.isSaved());
+        .generatedIdeasList() // 今あるネタの中から
+        .some((idea_item) => idea_item.isChecked() && !idea_item.isSaved()); // 条件に合うものを探す
     });
 
     /**
-     * AIネタ生成（シミュレーション）
+     * AIにネタを生成してもらうボタンを押した時の処理
      */
+    // 入力欄が空なら、処理を実行しない
     self.generateIdeas = () => {
-      const trimmedInput = self.rawInput().trim();
-      if (!trimmedInput) return;
+      const trimmed_input_text = self.rawInput().trim();
+      if (!trimmed_input_text) return;
 
-      self.isGenerating(true);
-      self.generatedIdeas([]); // リセット
+      // 状態を「生成中」にする（画面のボタンが『抽出中...』に変わる）
+      self.isGeneratingStatus(true);
+      self.generatedIdeasList([]); // 前の結果（提案されたネタ）をクリア
 
-      // 擬似的な生成待ち演出
-      setTimeout(() => {
-        const inputSnippet = trimmedInput.substring(0, 10);
-        const suggestionTemplates = [
-          `【漫才】「${inputSnippet}」の絶妙な違和感`,
-          `【コント】自称「${inputSnippet}」の達人`,
-          `【エッセイ】なぜ現代人は「${inputSnippet}」に惹かれるのか`,
-          `【大喜利】「${inputSnippet}」を100倍楽しくする方法`,
-          `【短編】「${inputSnippet}」から始まる物語`,
-        ];
+      // サーバー側の post_api_generate メソッドに送信
+      const generate_request_data = {
+        user_input: trimmed_input_text,
+        fuel_csrf_token: window.AppConfig.csrfToken, // PHPから渡されたセキュリティ用の合言葉
+      };
 
-        const mappedIdeas = suggestionTemplates.map(
-          (template) => new IdeaItemModel(template),
-        );
+      //jQueryを使ってPHPに「AIでネタ作って！」とリクエスト
+      $.post(window.AppConfig.endpoints.generateApi, generate_request_data)
+        .done((api_response) => {
+          //通信が成功したら...
+          if (api_response.new_token)
+            window.AppConfig.csrfToken = api_response.new_token; //トークンを更新
 
-        self.generatedIdeas(mappedIdeas);
-        self.isGenerating(false);
-      }, 800);
+          if (api_response.status === "success" && api_response.ideas) {
+            // 返ってきた文字列（ネタ）をModelに変換する処理を5件分繰り返す
+            const formatted_idea_objects = api_response.ideas.map(
+              (single_idea_text) => new IdeaItemModel(single_idea_text),
+            );
+            //配列にセット（HTMLのforeach 部分が動き、ネタの数だけIdeaItemModel（機能を備えたネタデータ）のリストとして表示される）
+            self.generatedIdeasList(formatted_idea_objects);
+          } else {
+            alert(
+              "ネタの生成に失敗しました: " +
+                (api_response.message || "不明なエラー"),
+            );
+          }
+        })
+        .fail((xhr_error_object) => {
+          // 失敗時もトークンを更新
+          const error_response = xhr_error_object.responseJSON;
+          if (error_response && error_response.new_token) {
+            window.AppConfig.csrfToken = error_response.new_token;
+          }
+          alert("通信エラーが発生しました。");
+        })
+        .always(() => {
+          self.isGeneratingStatus(false);
+        });
     };
 
     /**
      * 選択したネタの一括保存
      */
-    self.saveSelectedIdeas = () => {
-      const selectedIdeas = self
-        .generatedIdeas()
-        .filter((idea) => idea.isChecked() && !idea.isSaved());
-      if (selectedIdeas.length === 0) return;
+    self.saveSelectedIdeaList = () => {
+      const checked_idea_items = self
+        .generatedIdeasList() // チェック済みのネタだけを抜き出す
+        .filter((idea_item) => idea_item.isChecked() && !idea_item.isSaved());
 
-      self.isSaving(true);
+      if (checked_idea_items.length === 0) return;
 
-      const payload = {
-        ideas: selectedIdeas.map((idea) => idea.text()),
+      self.isSavingStatus(true);
+
+      const save_request_data = {
+        ideas: checked_idea_items.map((item) => item.text()),
         fuel_csrf_token: window.AppConfig.csrfToken,
       };
 
-      $.post(window.AppConfig.endpoints.saveIdeas, payload)
+      // PHPに「これらを保存して！」とリクエスト
+      $.post(window.AppConfig.endpoints.saveIdeas, save_request_data)
         .done(() => {
-          selectedIdeas.forEach((idea) => {
-            idea.isSaved(true);
-            idea.isChecked(false);
-            idea.isEditing(false);
+          // 保存できたら、画面上のネタを「保存済み」状態に変える
+          checked_idea_items.forEach((item) => {
+            item.isSaved(true);
+            item.isChecked(false);
+            item.isEditing(false);
           });
           alert("ネタを保存しました！");
+          // マイネタ一覧へ遷移
           window.location.href = window.AppConfig.endpoints.redirectUrl;
         })
         .fail(() => {
           alert("保存に失敗しました");
         })
         .always(() => {
-          self.isSaving(false);
+          self.isSavingStatus(false);
         });
     };
   };
 
-  // バインディングの開始
-  const container = document.getElementById("generate-app");
-  if (container) {
-    ko.applyBindings(new IdeaGenerateViewModel(), container);
+  // 起動処理
+  const app_container_element = document.getElementById("generate-app");
+  if (app_container_element) {
+    ko.applyBindings(new IdeaGenerateViewModel(), app_container_element);
   }
 });

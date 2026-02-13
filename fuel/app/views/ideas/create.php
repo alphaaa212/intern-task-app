@@ -14,6 +14,7 @@
 
 <div class="flex justify-center mt20">
   <div class="idea-form-container">
+  <!-- <form action='ideas/create', method='post'> -->
   <?php echo Form::open(['action' => 'ideas/create', 'method' => 'post']); ?>
         <?php echo Form::csrf(); ?>
 
@@ -31,6 +32,8 @@
           <?php echo Form::submit('submit', '保存する', ['class' => 'btn btn-primary']); ?>
           <?php echo Html::anchor('ideas/index', 'キャンセル', ['class' => 'btn btn-outline']); ?>
       </div>
+
+<!-- </form> -->
   <?php echo Form::close(); ?>
     </div>
   </div>

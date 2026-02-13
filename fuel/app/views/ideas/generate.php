@@ -17,18 +17,18 @@
   <div class="generate-input-container">
     <textarea class="generate-textarea" rows="5" 
       data-bind="value: rawInput, valueUpdate: 'input'" 
-      placeholder="頭の中にあることを自由に書いてみてください..."></textarea>
+      placeholder="整っていなくて構いません。頭の中にあることを自由に書いてみてください..."></textarea>
     
     <button class="btn btn-primary btn-large" 
-      data-bind="click: generateIdeas, disable: isGenerating() || !rawInput().trim()">
-      <span data-bind="text: isGenerating() ? '抽出中...' : 'ネタを生成する'">ネタを生成する</span>
+      data-bind="click: generateIdeas, disable: isGeneratingStatus() || !rawInput().trim()">
+      <span data-bind="text: isGeneratingStatus() ? '抽出中...' : 'ネタを生成する'">ネタを生成する</span>
     </button>
   </div>
 
-  <div class="results-area" data-bind="visible: generatedIdeas().length > 0" style="display: none;">
+  <div class="results-area" data-bind="visible: generatedIdeasList().length > 0" style="display: none;">
     <h3 class="section-title">✨ 提案されたネタ案</h3>
     
-    <div class="generated-list" data-bind="foreach: generatedIdeas">
+    <div class="generated-list" data-bind="foreach: generatedIdeasList">
       <div class="generated-item" data-bind="css: { 'is-selected': isChecked(), 'is-saved': isSaved(), 'is-editing': isEditing() }">
         <div class="item-main-row flex items-center">
           <div class="checkbox-wrapper" data-bind="visible: !isSaved()">
@@ -58,15 +58,15 @@
     </div>
 
     <div class="floating-actions" data-bind="visible: hasCheckedIdeas">
-      <button class="btn btn-success btn-large shadow" data-bind="click: saveSelectedIdeas, disable: isSaving">
-        <span data-bind="text: isSaving() ? '保存中...' : 'チェックした内容で保存する'"></span>
+      <button class="btn btn-success btn-large shadow" data-bind="click: saveSelectedIdeaList, disable: isSavingStatus">
+        <span data-bind="text: isSavingStatus() ? '保存中...' : 'チェックした内容で保存する'"></span>
       </button>
     </div>
   </div>
 </div>
 
 <script>
-  // PHPからの動的変数をJSに渡すためのブリッジ（ここだけViewに残すのが一般的です）
+  // PHPからの動的変数をJSに渡すためのブリッジ
   window.AppConfig = {
     endpoints: {
       generateApi: '<?php echo \Uri::create("ideas/api_generate"); ?>',

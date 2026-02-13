@@ -1,31 +1,6 @@
-/* 共通ユーティリティ（規約に従い小文字・半角2文字） */
-.flex {
-  display: flex;
-}
-.justify-between {
-  justify-content: space-between;
-}
-.items-center {
-  align-items: center;
-}
-.mt20 {
-  margin-top: 20px;
-}
-.gap8 {
-  gap: 8px;
-}
-.gap10 {
-  gap: 10px;
-}
-.gap15 {
-  gap: 15px;
-}
-
-/* ページ構成要素 */
-.page-header {
-  margin-bottom: 30px;
-}
-
+/* 
+  1. ページ構成要素（具体的なデザイン）
+*/
 .page-title {
   margin: 0;
   font-size: 1.5rem;
@@ -41,7 +16,6 @@
 /* ネタカード */
 .idea-item {
   background-color: #ffffff;
-  margin-bottom: 12px;
   padding: 20px;
   border-radius: 8px;
   border: 1px solid #e2e8f0;
@@ -60,10 +34,6 @@
   cursor: pointer;
   user-select: none;
   transition: transform 0.2s;
-}
-
-.favorite-icon:hover {
-  transform: scale(1.2);
 }
 
 .is-fav {
@@ -109,32 +79,45 @@
   color: #ffffff;
 }
 
-.btn-sm {
-  padding: 4px 10px;
-  font-size: 0.75rem;
-}
 .btn-save {
   background-color: #2ecc71;
   color: #ffffff;
 }
+
 .btn-danger {
   color: #e74c3c;
   background: transparent;
 }
 
-.edit-input {
-  flex: 1;
-  padding: 8px;
-  border: 2px solid #3498db;
-  border-radius: 4px;
-  outline: none;
+/* 
+  共通ユーティリティ（!importantなし）
+  ※ファイルの後半に書くことで、前半の設定よりも優先されやすくします
+*/
+.flex {
+  display: flex;
+}
+.justify-between {
+  justify-content: space-between;
+}
+.items-center {
+  align-items: center;
+}
+.mt20 {
+  margin-top: 20px;
+}
+.mb12 {
+  margin-bottom: 12px;
+}
+.mb30 {
+  margin-bottom: 30px;
 }
 
-.empty-state {
-  text-align: center;
-  padding: 60px;
-  color: #94a3b8;
-  background-color: #ffffff;
-  border-radius: 8px;
-  border: 2px dashed #e2e8f0;
+.gap8 {
+  gap: 8px;
+}
+.gap10 {
+  gap: 10px;
+}
+.gap15 {
+  gap: 15px;
 }

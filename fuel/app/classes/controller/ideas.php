@@ -1,12 +1,26 @@
 <?php
 class Controller_Ideas extends Controller_Base
 {
+    protected $user_id;
+
   /**
+   * アクション実行前の共通処理
+   */
+    public function before()
+    {
+    parent::before();
+    // 親クラス(Base)で取得済みのIDを利用
+    $this->user_id = $this->current_user ? $this->current_user->id : null;
+    }
+
+
+      /**
    * JSONレスポンスの共通処理
    * @param array $data ブラウザへ返したいデータ本体
    * @param int $status HTTPステータスコード（成功:200、エラー:400など）
    * @return \Response 整形済みのレスポンスオブジェクト
    */
+
   private function ajax_response($data = [], $status = 200)
   {
     // 次の送信で用いるトークンを生成
@@ -23,22 +37,13 @@ class Controller_Ideas extends Controller_Base
    */
   public function action_index()
   {
-    // Authクラスを使用してログインユーザーIDを取得
-    $user_auth_info = \Auth::get_user_id();
-    $user_id = $user_auth_info[1];
-
-    // ideaselection.phpで返された$resultを新しく定義した変数$ideasに代入
-    $ideas = Model_IdeaSelection::getIdeas_by_user_id($user_id);
-
+        $ideas = Model_IdeaSelection::get_ideas_by_user_id($this->user_id);
 
     $this->template->title = 'マイネタ一覧';
     $this->template->content = \View::forge('ideas/index');
-    
-    // データの整形
-    $ideas_json = json_encode($ideas);
 
     // エンコーディングはoff（そのままideas/index.phpに読み込ませる）
-    $this->template->content->set('ideas_json', $ideas_json, false);
+    $this->template->content->set('ideas_json', json_encode($ideas), false);
   }
 
   /**
@@ -73,17 +78,15 @@ class Controller_Ideas extends Controller_Base
       return \Response::redirect('ideas/create');
     }
 
-    $user_auth_info = \Auth::get_user_id();
-    $insert_data = [
-      'user_id'     => $user_auth_info[1],
+    $res = Model_IdeaSelection::insert_idea([
+      'user_id'     => $this->user_id,
       // バリデートに成功したフィールド(idea_text)と値(手動で追加しようとしているネタの名前)を取得する
         'idea_text'   => $val->validated('idea_text'),
         // お気に入りはデフォルトでoffにする
         'is_favorite' => 0,
-      ];
+    ]);
 
-    // Modelのメソッド（insert）を使用して保存
-    if (!Model_IdeaSelection::insert_idea($insert_data)) {
+    if (!$res) {
       \Session::set_flash('error', '保存に失敗しました。');
       return \Response::redirect('ideas/create');
       }
@@ -108,12 +111,10 @@ class Controller_Ideas extends Controller_Base
     }
 
     $success_count = 0;
-    $user_auth_info = \Auth::get_user_id();
-    $user_id = $user_auth_info[1];
 
     foreach ($post_ideas as $idea_text) {
       $insert_data = [
-        'user_id'     => $user_id,
+        'user_id'     => $this->user_id,
         'idea_text'   => (string) $idea_text,
         'is_favorite' => 0,
       ];
@@ -137,13 +138,11 @@ class Controller_Ideas extends Controller_Base
     }
 
     $target_id = (int) \Input::post('id');
-    $idea_record = Model_IdeaSelection::getIdea_by_ideaId($target_id);
-    $user_auth_info = \Auth::get_user_id();
-    $user_id = $user_auth_info[1];
+    $idea_record = Model_IdeaSelection::get_idea_by_ideaId($target_id);
 
     // 本人のデータかチェック
       // $idea_recordが存在しないか、ログインユーザーとアイデアのユーザーが一致しない場合
-    if (!$idea_record || (int) $idea_record['user_id'] !== (int) $user_id) {
+    if (!$idea_record || (int) $idea_record['user_id'] !== (int) $this->user_id) {
       return $this->ajax_response(['status' => 'error'], 403);
     }
 
@@ -169,11 +168,9 @@ class Controller_Ideas extends Controller_Base
     }
 
     $target_id = (int) \Input::post('id');
-    $idea_record = Model_IdeaSelection::getIdea_by_ideaId($target_id);
-    $user_auth_info = \Auth::get_user_id();
-    $user_id = $user_auth_info[1];
+    $idea_record = Model_IdeaSelection::get_idea_by_ideaId($target_id);
 
-    if (!$idea_record || (int) $idea_record['user_id'] !== (int) $user_id) {
+    if (!$idea_record || (int) $idea_record['user_id'] !== (int) $this->user_id) {
       return $this->ajax_response(['status' => 'error'], 403);
     }
 
@@ -197,111 +194,25 @@ class Controller_Ideas extends Controller_Base
    */
   /**
    * Gemini AIによるネタ生成 (AJAX)
-   * POST: /ideas/api_generate
-   */
+      */
   public function post_api_generate()
   {
-    // 1. セキュリティチェック（CSRFトークン）
-    if (!\Security::check_token()) {
-      return $this->ajax_response(['status' => 'error', 'message' => 'セッションがタイムアウトしました。ページを再読み込みしてください。'], 400);
+        if (!\Security::check_token()) {
+            return $this->ajax_response(['status' => 'error', 'message' => 'セッション切れ'], 400);
     }
 
-    // 2. 入力値の取得とバリデーション
-    $user_input = \Input::post('user_input');
-    if (empty(trim($user_input))) {
+    $user_input = trim((string)\Input::post('user_input'));
+    if (empty($user_input)) {
       return $this->ajax_response(['status' => 'error', 'message' => '入力が空です'], 400);
     }
 
-    // 3. ConfigからAPIキーを取得（development/config.phpから読み込まれます）
-    $api_key = \Config::get('gemini.api_key');
-    if (empty($api_key)) {
-        return $this->ajax_response(['status' => 'error', 'message' => 'APIキーが設定されていません。'], 500);
-    }
-
-    // 4. Gemini API 設定 (最新の2.5-flashモデルを使用)
-    $model = "gemini-2.5-flash";
-    $url = "https://generativelanguage.googleapis.com/v1/models/{$model}:generateContent?key={$api_key}";
-
-    // 5. プロンプト（命令文）の構築
-    $prompt = "あなたは、執筆者の可能性を広げる『多角的な視点を持つ編集者』です。
-    ユーザーの入力内容をテーマにして、**それぞれ全く異なる記事の中身になるような**、バリエーション豊かなタイトル案を5件提案してください。
-
-    【ユーザーの入力内容】:
-    「{$user_input}」
-
-    【思考プロセス：5つの異なる役割から提案する】:
-    1. 【内省エッセイ】個人的な体験や、心の機微を深掘りする切り口。
-    2. 【実用・Tips】読者の悩みを解決したり、新しいやり方を提案したりする実用的な切り口。
-    3. 【批評・社会】その言葉を社会現象や文化、価値観のレベルで鋭く分析する切り口。
-    4. 【if・物語】「もしも〜だったら？」という仮定から、想像力を膨らませるフィクションや実験的切り口。
-    5. 【Q&A・対話】読者との対話や、自分への問いかけを軸にした参加型の切り口。
-
-    【出力ルール】:
-    - 5件がそれぞれ「書きたい内容（構成）」が明確に異なるようにすること。
-    - 似たような方向性のタイトルは即座に却下し、1件ごとに別のジャンルとして成立させること。
-    - 執筆者が「これなら違う内容が書ける！」と納得できる多様性を持たせること。
-    - 余計な説明は省き、タイトルのみを5行、行頭「- 」形式で出力してください。";
-
-    $data = [
-      "contents" => [
-        [
-          "parts" => [
-            ["text" => $prompt]
-          ]
-        ]
-      ]
-    ];
-
-    // 6. cURLによるAPIリクエスト
-    $ch = curl_init($url);
-    curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
-    curl_setopt($ch, CURLOPT_POST, true);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); // ローカル開発環境用
-
-    $response = curl_exec($ch);
-    $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    $curl_error = curl_error($ch);
-    curl_close($ch);
-
-    // 7. 通信エラー判定
-    if ($http_code !== 200) {
-      return $this->ajax_response([
-        'status' => 'error',
-        'message' => 'AIとの通信に失敗しました。',
-        'debug_info' => [
-          'http_code' => $http_code,
-          'curl_error' => $curl_error,
-          'google_response' => json_decode($response, true) ?: $response
-        ]
-      ], 500);
-    }
-
-    // 8. レスポンスの解析と整形
-    $result = json_decode($response, true);
-    $ai_text = $result['candidates'][0]['content']['parts'][0]['text'] ?? '';
-
-    // テキストから5件のリストを抽出（空行を除外）
-    $lines = explode("\n", $ai_text);
-    $clean_ideas = [];
-    
-    foreach ($lines as $line) {
-      $trimmed = trim($line);
-      if (empty($trimmed)) continue;
-
-      // 行頭の記号（- や * や 数字. ）を削除
-      $cleaned = ltrim($trimmed, "- *1234567890. \t\n\r\0\x0B");
-      
-      if (!empty($cleaned)) {
-        $clean_ideas[] = $cleaned;
-      }
-    }
-
-    // 最大5件を返却
-    return $this->ajax_response([
-      'status' => 'success',
-      'ideas' => array_slice($clean_ideas, 0, 5)
-    ]);
+    try {
+            $ideas = Service_Gemini::generate_ideas($user_input);
+            return $this->ajax_response(['status' => 'success', 'ideas' => $ideas]);
+        } catch (\Exception $e) {
+      // エラーメッセージをログに残しつつ、ユーザーに通知
+      \Log::error('Gemini API Error: ' . $e->getMessage());
+      return $this->ajax_response(['status' => 'error', 'message' => 'AI通信に失敗しました'], 500);
+}
   }
 }

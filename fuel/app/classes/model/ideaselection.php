@@ -7,7 +7,7 @@ class Model_IdeaSelection extends \Model
   /**
    * ユーザーIDに紐づくネタ一覧を取得
    */
-  public static function getIdeas_by_user_id($user_id)
+  public static function get_ideas_by_user_id($user_id)
   {
     $result = \DB::select()
       ->from('idea_selections')
@@ -22,7 +22,7 @@ class Model_IdeaSelection extends \Model
   /**
    * 単一のネタを取得（編集・削除権限チェック用）
    */
-  public static function getIdea_by_ideaId($id)
+  public static function get_idea_by_id($id)
   {
     return \DB::select()
       ->from('idea_selections')
@@ -36,8 +36,9 @@ class Model_IdeaSelection extends \Model
    */
   public static function insert_idea($data)
   {
-    $data['created_at'] = date('Y-m-d H:i:s');
-    $data['updated_at'] = date('Y-m-d H:i:s');
+    $now = date('Y-m-d H:i:s');
+    $data['created_at'] = $now;
+    $data['updated_at'] = $now;
 
     // executeにより返却される配列を入れるために2つの変数（insertされたIDのリストと、insertされたレコード数）を定義している
     list($insert_id, $rows_affected) = \DB::insert('idea_selections')
@@ -66,7 +67,7 @@ class Model_IdeaSelection extends \Model
   public static function delete_idea($id)
   {
     return \DB::delete('idea_selections')
-      ->where('id', '=', $id)
+      ->where('id', '=', (int)$id)
       ->execute();
   }
 }

@@ -2,10 +2,6 @@
 
 /**
  * 全コントローラの基底クラス
- * 【修正ポイント】
- * ・独自セッション管理から Auth クラスによる管理へ統合（バグ修正）
- * ・インデントを半角2文字に修正
- * ・早期リターンによるロジックの整理
  */
 class Controller_Base extends Controller_Template 
 {
@@ -16,13 +12,11 @@ class Controller_Base extends Controller_Template
     {
         parent::before();
 
-    // 1. Authパッケージからログイン状態を確認
+    // Authパッケージからユーザー情報を一度に取得
     if (\Auth::check()) {
-      // ユーザー情報をオブジェクト形式で取得（Model_User相当のデータをセット）
-      // SimpleAuthの場合、get_screen_nameやget_email等が使えますが、
-      // 規約に合わせプロパティとして扱いやすい形にします
+      $user_id = \Auth::get_user_id()[1];
       $this->current_user = (object) [
-        'id'       => \Auth::get_user_id()[1],
+        'id'       => $user_id,
         'username' => \Auth::get_screen_name(),
       ];
       
@@ -30,7 +24,7 @@ class Controller_Base extends Controller_Template
       $this->template->set_global('user', $this->current_user);
         }
 
-    // 2. 認証ガード：未ログイン時のリダイレクト処理
+    // 認証ガード：未ログイン時のリダイレクト処理
     $this->auth_guard();
   }
 

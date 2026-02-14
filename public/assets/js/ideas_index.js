@@ -38,16 +38,16 @@ $(function () {
       const allIdeas = self.ideas();
       // モードがallならそのまま、favならお気に入りがtrueのものだけを抽出して返す
       return mode === "all"
-        ? allIdeas
-        : allIdeas.filter((idea) => idea.is_favorite());
+        ? self.ideas()
+        : self.ideas().filter((idea) => idea.is_favorite());
     });
 
-    /**
-     * トークン更新処理（サーバーから新しいセキュリティトークンが届いたら上書きする）
-     */
-    const updateCsrfToken = (response) => {
-      if (response && response.new_token) {
-        currentCsrfToken = response.new_token;
+    // CSRFトークン更新
+    const updateCsrfToken = (res) => {
+      if (res && res.new_token) {
+        // グローバルの値を更新
+        config.csrf.token = res.new_token;
+        console.log("Token updated:", res.new_token); // デバッグ用
       }
     };
 
@@ -65,9 +65,8 @@ $(function () {
      * 編集保存（保存ボタンを押した時の処理）
      */
     self.saveEdit = (item) => {
-      // サーバーに現在の内容を送信
+      console.log("Saving item:", item.id, item.idea_text());
       self.sendUpdate(item);
-      // 編集モードを終了して通常表示に戻す
       item.isEditing(false);
     };
 
@@ -75,22 +74,23 @@ $(function () {
      * 更新リクエスト共通（サーバーと通信する処理）
      */
     self.sendUpdate = (item) => {
-      // 送信するデータを作成（ID、テキスト、お気に入り状態）
       const postData = {
         id: item.id,
         idea_text: item.idea_text(),
         is_favorite: item.is_favorite() ? 1 : 0,
       };
-      // 規約に基づき、セキュリティ用のCSRFトークンをデータに含める
-      postData[config.csrf.key] = currentCsrfToken;
+      // CSRFトークンをセット
+      postData[config.csrf.key] = config.csrf.token;
 
-      // サーバーの保存用URLにPOST送信を行う
-      $.post(config.endpoints.save, postData)
-        .done((res) => updateCsrfToken(res)) // 成功したらトークンを更新
+      $.post(config.endpoints.save, postData) //ideas.phpのpost_saveを呼び出す(index.php内で生成したURLを用いてpost形式でデータを送る)
+        .done((res) => {
+          console.log("Save success");
+          updateCsrfToken(res);
+        })
         .fail((xhr) => {
-          // 失敗時の処理
-          if (xhr.responseJSON) updateCsrfToken(xhr.responseJSON);
-          alert("保存に失敗しました。");
+          const res = xhr.responseJSON;
+          updateCsrfToken(res);
+          alert("保存に失敗しました。ページを再読み込みしてください。");
         });
     };
 
@@ -99,24 +99,23 @@ $(function () {
      */
     self.deleteIdea = (item) => {
       // 確認ダイアログを表示し、キャンセルされたら何もしない
-      if (!confirm("このネタを削除してもよろしいですか？")) {
-        return;
-      }
+      if (!confirm("このネタを削除してもよろしいですか？")) return;
 
       // 送信用にIDを用意
-      const deleteData = { id: item.id };
-      // CSRFトークンをセット
-      deleteData[config.csrf.key] = currentCsrfToken;
+      const postData = { id: item.id };
+      // 常に window.AppConfig にある最新のトークンを使用する
+      postData[config.csrf.key] = config.csrf.token;
 
       // サーバーの削除用URLにPOST送信
-      $.post(config.endpoints.delete, deleteData)
+      $.post(config.endpoints.delete, postData) //ideas.phpのpost_saveを呼び出す(index.php内で生成したURLを用いてpost形式でデータを送る)
         .done((res) => {
+          // サーバーから「成功」と返ってきたら、合言葉（トークン）を更新
           updateCsrfToken(res);
           // 成功したら、画面上のリスト(ideas)からその項目を取り除く
           self.ideas.remove(item);
         })
         .fail((xhr) => {
-          if (xhr.responseJSON) updateCsrfToken(xhr.responseJSON);
+          updateCsrfToken(xhr.responseJSON);
           alert("削除に失敗しました。");
         });
     };
@@ -125,7 +124,6 @@ $(function () {
   // 画面上に ideas-app というIDの要素があるか確認
   const container = document.getElementById("ideas-app");
   if (container) {
-    // Knockout.jsを起動し、データをHTML要素にバインド（紐付け）する
     ko.applyBindings(
       new IdeaListViewModel(window.AppConfig.ideasData),
       container,

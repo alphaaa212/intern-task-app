@@ -22,7 +22,7 @@ class Model_IdeaSelection extends \Model
   /**
    * 単一のネタを取得（編集・削除権限チェック用）
    */
-  public static function get_idea_by_id($id)
+  public static function get_idea_by_ideaId($id)
   {
     return \DB::select()
       ->from('idea_selections')

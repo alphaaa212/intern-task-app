@@ -36,6 +36,10 @@
   transition: transform 0.2s;
 }
 
+.favorite-icon:hover {
+  transform: scale(1.2);
+}
+
 .is-fav {
   color: #fbc02d;
 }
@@ -52,14 +56,12 @@
 
 /* ボタン */
 .btn {
-  padding: 8px 16px;
+  padding: 5px 8px;
   border-radius: 6px;
   border: none;
   cursor: pointer;
-  font-weight: 600;
-  font-size: 0.875rem;
-  transition: all 0.2s;
-  display: inline-block;
+  font-size: 1rem;
+  transition: transform 0.1s ease;
 }
 
 .btn-primary {
@@ -82,11 +84,20 @@
 .btn-save {
   background-color: #2ecc71;
   color: #ffffff;
+  font-size: 0.85rem;
 }
 
 .btn-danger {
   color: #e74c3c;
   background: transparent;
+}
+
+/* 編集用入力欄 */
+.edit-input {
+  flex: 1;
+  padding: 5px 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
 }
 
 /* 
@@ -112,12 +123,13 @@
   margin-bottom: 30px;
 }
 
+/* 共通レイアウト補助 */
+.gap15 {
+  gap: 15px;
+}
 .gap8 {
   gap: 8px;
 }
 .gap10 {
   gap: 10px;
-}
-.gap15 {
-  gap: 15px;
 }

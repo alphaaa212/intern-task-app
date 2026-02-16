@@ -16,7 +16,7 @@
     <div class="form-card">
       <?php if (!empty($errors)): ?>
         <div class="error-summary">
-          <ul class="error-list">
+          <ul class="error-text">
             <?php foreach ($errors as $error): ?>
               <li><?php echo e($error); ?></li>
             <?php endforeach; ?>
@@ -36,6 +36,11 @@
             <!-- エラーが起きた時に、再度ユーザー名を入力しなくてよいようにvalueをセットする -->
             <input type="text" name="username" class="form-input" value="<?php echo e(Input::post('username', '')); ?>" placeholder="例: tanaka_tarou">
           </label>
+          <?php if (isset($errors['username'])): ?>
+            <p class="error-text">
+              <?php echo e($errors['username']); ?>
+            </p>
+          <?php endif; ?>
         </div>
 
         <div class="form-group">
@@ -43,6 +48,11 @@
             メールアドレス
             <input type="email" name="email" class="form-input" value="<?php echo e(Input::post('email', '')); ?>" placeholder="example@mail.com">
           </label>
+          <?php if (isset($errors['email'])): ?>
+            <p class="error-text">
+              <?php echo e($errors['email']); ?>
+            </p>
+          <?php endif; ?>
         </div>
 
         <div class="form-group">
@@ -50,6 +60,11 @@
             パスワード（8文字以上）
             <input type="password" name="password" class="form-input" placeholder="パスワードを入力">
           </label>
+          <?php if (isset($errors['password'])): ?>
+            <p class="error-text">
+              <?php echo e($errors['password']); ?>
+            </p>
+          <?php endif; ?>
         </div>
 
         <div class="form-group">
@@ -57,6 +72,11 @@
             パスワード（確認）
             <input type="password" name="password_confirm" class="form-input" placeholder="もう一度パスワードを入力">
           </label>
+          <?php if (isset($errors['password_confirm'])): ?>
+            <p class="error-text">
+              <?php echo e($errors['password_confirm']); ?>
+            </p>
+          <?php endif; ?>
         </div>
 
         <div class="form-actions">

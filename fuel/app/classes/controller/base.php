@@ -28,16 +28,28 @@ class Controller_Base extends Controller_Template
     $this->auth_guard();
   }
 
-  /**
-   * 未ログインユーザーのアクセス制限
-   */
-  private function auth_guard()
-  {
-    $current_controller = \Request::active()->controller;
+    /**
+     * 【改善】アフター処理でセキュリティヘッダを付与
+     */
+    public function after($response)
+    {
+        $response = parent::after($response);
 
-    // ログイン・登録画面（Controller_Auth）以外へのアクセスで未ログインならリダイレクト
+        // IPA推奨：クリックジャッキング対策
+        $response->set_header('X-Frame-Options', 'SAMEORIGIN');
+        // XSS対策（ブラウザのフィルタリング機能有効化）
+        $response->set_header('X-XSS-Protection', '1; mode=block');
+        // コンテンツタイプ誤認によるスクリプト実行防止
+        $response->set_header('X-Content-Type-Options', 'nosniff');
+
+        return $response;
+    }
+
+    private function auth_guard()
+    {
+        $current_controller = \Request::active()->controller;
         if ($current_controller !== 'Controller_Auth' && !$this->current_user) {
-      \Response::redirect('auth/login');
+          \Response::redirect('auth/login');
         }
     }
 }

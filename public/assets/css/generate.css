@@ -116,17 +116,46 @@
   justify-content: flex-end;
   gap: 8px;
   flex-shrink: 0;
-  width: 70px;
+  min-width: 60px;
+}
+
+/* 編集中のアイテムは少しアクションエリアを広めに確保 */
+.generated-item.is-editing .item-actions {
+  min-width: 130px;
 }
 
 .btn-sm {
-  padding: 4px 12px;
-  font-size: 0.8rem;
+  padding: 6px 12px;
+  font-size: 0.85rem;
+  white-space: nowrap;
+  cursor: pointer;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+  background: #fff;
 }
 
 .btn-save {
   background-color: #3498db;
   color: #ffffff;
+}
+
+.btn-save:hover {
+  background-color: #2980b9;
+}
+
+.btn-outline:hover {
+  background-color: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+.edit-field {
+  width: 100%;
+  padding: 8px 12px;
+  border: 2px solid #3498db;
+  border-radius: 6px;
+  font-size: 1rem;
+  box-sizing: border-box;
+  background-color: #fcfdff;
 }
 
 .badge-success {

@@ -8,10 +8,36 @@ $(function () {
     // self = 生成されたネタ一行分のオブジェクト
     const self = this;
     // observableを用いることで、値が変わったら画面にも反映させる
-    self.text = ko.observable(idea_text_str); //ネタの文章
+    self.text = ko.observable(idea_text_str); //確定済みの文章（値）
     self.isChecked = ko.observable(false); // チェックが入っているか
     self.isSaved = ko.observable(false); //保存されたか
     self.isEditing = ko.observable(false); //今、編集中か
+    // --- 追加: 編集中の未確定テキストを保持するObservable ---
+    self.editText = ko.observable("");
+
+    // 編集開始
+    self.startEdit = () => {
+      // 編集を開始する瞬間に、現在の値を編集用フィールドにコピーする
+      self.editText(self.text());
+      self.isEditing(true);
+    };
+
+    // 確定（保存）
+    self.confirmEdit = () => {
+      const newVal = self.editText().trim();
+      if (!newVal) {
+        self.cancelEdit();
+        return;
+      }
+      // 確定ボタンを押した時だけ、元の text に値を反映させる
+      self.text(newVal);
+      self.isEditing(false);
+    };
+
+    // キャンセル（戻す）
+    self.cancelEdit = () => {
+      self.isEditing(false);
+    };
   };
 
   /**
@@ -26,6 +52,14 @@ $(function () {
     self.isGeneratingStatus = ko.observable(false); //生成通信中フラグ
     self.isSavingStatus = ko.observable(false); //保存通信中フラグ
     self.generatedIdeasList = ko.observableArray([]); //生成されたネタのリスト
+
+    // --- 追加: ボタンのテキストを動的に切り替える計算プロパティ ---
+    self.generateButtonText = ko.computed(() => {
+      if (self.isGeneratingStatus()) return "抽出中...";
+      return self.generatedIdeasList().length > 0
+        ? "ネタを再生成する"
+        : "ネタを生成する";
+    });
 
     // 算出プロパティ: チェック済みかつ未保存のネタが1つでもあるか
     self.hasCheckedIdeas = ko.computed(() => {
@@ -44,7 +78,7 @@ $(function () {
 
       // 状態を「生成中」にする（画面のボタンが『抽出中...』に変わる）
       self.isGeneratingStatus(true);
-      self.generatedIdeasList([]); // 前の結果（提案されたネタ）をクリア
+      self.generatedIdeasList([]); // 再生成時も含め前のリストをクリア
 
       // サーバー側の post_api_generate メソッドに送信
       const generate_request_data = {

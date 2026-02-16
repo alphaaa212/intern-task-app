@@ -109,9 +109,12 @@ class Controller_Ideas extends Controller_Base
 
     $success_count = 0;
     foreach ($post_ideas as $text) {
+      // 【改善】一括登録時も文字列長などの簡易バリデーションを行う
+      $clean_text = trim((string)$text);
+      if (empty($clean_text) || mb_strlen($clean_text) > 255) continue;
       if (Model_IdeaSelection::insert_idea([
         'user_id'     => $this->user_id,
-        'idea_text'   => (string)$text,
+        'idea_text'   => $clean_text,
         'is_favorite' => 0,
       ])) $success_count++;
     }
@@ -125,24 +128,30 @@ class Controller_Ideas extends Controller_Base
    */
   public function post_save()
   {
-      // CSRFチェック
-      if (!\Security::check_token()) {
-          return $this->ajax_response(['status' => 'error', 'message' => 'CSRF fail'], 400);
-      }
+    // CSRFチェック失敗時にHTMLではなくJSONを返すように修正
+    if (!\Security::check_token()) {
+      return $this->ajax_response(['status' => 'error', 'message' => 'セッション切れです。ページを更新してください。'], 400);
+    }
 
-      $id = \Input::post('id');
-      $text = \Input::post('idea_text');
-      $fav = \Input::post('is_favorite');
+    $id = \Input::post('id');
+    $text = \Input::post('idea_text');
+    $fav = \Input::post('is_favorite');
 
-      // 所有権チェック
-      $idea = $this->get_owned_idea($id);
-      if (!$idea) {
-          return $this->ajax_response(['status' => 'error', 'message' => 'Forbidden'], 403);
-      }
+    // 所有権チェック
+    $idea = $this->get_owned_idea($id);
+    if (!$idea) {
+        return $this->ajax_response(['status' => 'error', 'message' => 'Forbidden'], 403);
+    }
+
+    // 【改善】バリデーション（空文字チェックや文字数制限）
+    $clean_text = trim((string)$text);
+    if (empty($clean_text) || mb_strlen($clean_text) > 255) {
+        return $this->ajax_response(['status' => 'error', 'message' => '入力内容が正しくありません'], 400);
+    }
 
       $update_params = [
-          'idea_text'   => (string)$text,
-          'is_favorite' => ($fav == 1) ? 1 : 0,
+          'idea_text'   => $clean_text,
+          'is_favorite' => ($fav == 1 || $fav === 'true' || $fav === true) ? 1 : 0,
       ];
 
       // Model側でDB更新
@@ -151,13 +160,16 @@ class Controller_Ideas extends Controller_Base
       return $this->ajax_response(['status' => 'success']);
   }
 
+
   /**
    * 削除処理 (AJAX)
    * POST: /ideas/delete
    */
   public function post_delete()
   {
-    if (!\Security::check_token()) return $this->ajax_response(['status' => 'error'], 400);
+    if (!\Security::check_token()) {
+      return $this->ajax_response(['status' => 'error', 'message' => 'セッション切れです。ページを更新してください。'], 400);
+    }
 
     $id = \Input::post('id');
     if (!$this->get_owned_idea($id)) return $this->ajax_response(['status' => 'error'], 403);

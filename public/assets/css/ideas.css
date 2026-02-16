@@ -100,6 +100,14 @@
   border-radius: 4px;
 }
 
+.empty-message {
+  background: #f9f9f9;
+  border-radius: 8px;
+  color: #666;
+  display: flex;
+  justify-content: center;
+}
+
 /* 
   共通ユーティリティ（!importantなし）
   ※ファイルの後半に書くことで、前半の設定よりも優先されやすくします
@@ -113,9 +121,15 @@
 .items-center {
   align-items: center;
 }
+
 .mt20 {
   margin-top: 20px;
 }
+
+.mt40 {
+  margin-top: 40px;
+}
+
 .mb12 {
   margin-bottom: 12px;
 }

@@ -25,6 +25,10 @@
     </div>
   </div>
 
+  <div class="empty-message mt40" data-bind="visible:ideas().length === 0">
+    <p>ネタが登録されていません。新しく登録してみましょう！</p>
+  </div>
+
   <div class="ideas-list mt20" data-bind="foreach: filteredIdeas">
     <div class="idea-item mb12">
       
@@ -37,18 +41,18 @@
           <p class="idea-text" data-bind="text: idea_text"></p>
         </div>
         <div class="idea-actions flex gap8">
-          <button type="button" class="btn btn-outline btn-sm" data-bind="click: () => isEditing(true)">編集</button>
+          <button type="button" class="btn btn-outline btn-sm" data-bind="click: startEdit">編集</button>
           <button type="button" class="btn btn-danger btn-sm" data-bind="click: $parent.deleteIdea">削除</button>
         </div>
       </div>
 
       <div data-bind="visible: isEditing">
         <div class="flex gap10">
-          <input type="text" class="edit-input" data-bind="textInput: idea_text">
+          <input type="text" class="edit-input" data-bind="textInput: tempText">
           
           <button type="button" class="btn btn-save" data-bind="click: $root.saveEdit">保存</button>
           
-          <button type="button" class="btn btn-outline" data-bind="click: () => isEditing(false)">戻る</button>
+          <button type="button" class="btn btn-outline" data-bind="click: cancelEdit">戻る</button>
         </div>
       </div>
 
@@ -76,6 +80,7 @@
 
 <?php echo Asset::js('jquery.min.js'); ?>
 <?php echo Asset::js('knockout.js'); ?>
-<script src="<?php echo Asset::get_file('ideas_index.js', 'js'); ?>?v=<?php echo time(); ?>"></script>
+<?php echo Asset::js('ideas_index.js'); ?>
+
 </body>
 </html>

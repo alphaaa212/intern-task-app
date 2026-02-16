@@ -11,8 +11,20 @@ $(function () {
     self.idea_text = ko.observable(data.idea_text);
     // お気に入り状態を真偽値に変換して監視対象にする
     self.is_favorite = ko.observable(String(data.is_favorite) === "1");
-    // このネタが現在編集モードかどうかを管理する（初期値はfalse）
+    // 編集モードかどうかを管理する（初期値はfalse）
     self.isEditing = ko.observable(false);
+    //編集時の一時的なテキストを保持する変数
+    self.tempText = ko.observable("");
+    // 編集モードに入る時の処理
+    self.startEdit = function () {
+      self.tempText(self.idea_text()); // 現在の値を一時変数にコピー
+      self.isEditing(true);
+    };
+
+    // --- 追加: 編集をキャンセルする時の処理 ---
+    self.cancelEdit = function () {
+      self.isEditing(false); // 何もせず閉じる
+    };
   };
 
   /**
@@ -45,9 +57,8 @@ $(function () {
     // CSRFトークン更新
     const updateCsrfToken = (res) => {
       if (res && res.new_token) {
-        // グローバルの値を更新
         config.csrf.token = res.new_token;
-        console.log("Token updated:", res.new_token); // デバッグ用
+        console.log("Token updated:", res.new_token);
       }
     };
 
@@ -65,6 +76,15 @@ $(function () {
      * 編集保存（保存ボタンを押した時の処理）
      */
     self.saveEdit = (item) => {
+      const newText = item.tempText();
+
+      if (!newText.trim()) {
+        alert("テキストを入力してください。");
+        return;
+      }
+
+      item.idea_text(newText); // ここで初めて元のテキストが更新される
+
       console.log("Saving item:", item.id, item.idea_text());
       self.sendUpdate(item);
       item.isEditing(false);
@@ -79,6 +99,7 @@ $(function () {
         idea_text: item.idea_text(),
         is_favorite: item.is_favorite() ? 1 : 0,
       };
+
       // CSRFトークンをセット
       postData[config.csrf.key] = config.csrf.token;
 
@@ -90,7 +111,9 @@ $(function () {
         .fail((xhr) => {
           const res = xhr.responseJSON;
           updateCsrfToken(res);
-          alert("保存に失敗しました。ページを再読み込みしてください。");
+          // エラーメッセージを表示（バリデーションメッセージがあればそれを優先）
+          const msg = res && res.message ? res.message : "保存に失敗しました。";
+          alert(msg);
         });
     };
 

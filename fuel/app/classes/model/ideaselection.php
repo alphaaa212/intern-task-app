@@ -53,12 +53,17 @@ class Model_IdeaSelection extends \Model
    */
   public static function update_idea($id, $data)
   {
-    $data['updated_at'] = date('Y-m-d H:i:s');
+      // 保存を許可するカラムだけに絞り込む（ホワイトリスト）
+      $safe_data = [];
+      if (isset($data['idea_text']))   $safe_data['idea_text'] = (string)$data['idea_text'];
+      if (isset($data['is_favorite'])) $safe_data['is_favorite'] = (int)$data['is_favorite'];
+      
+      $safe_data['updated_at'] = date('Y-m-d H:i:s');
 
-    return \DB::update('idea_selections')
-      ->set($data)
-      ->where('id', '=', (int)$id)
-      ->execute();
+      return \DB::update('idea_selections')
+        ->set($safe_data) // 安全なデータのみセット
+        ->where('id', '=', (int)$id)
+        ->execute();
   }
 
   /**

@@ -21,7 +21,7 @@
     
     <button class="btn btn-primary btn-large" 
       data-bind="click: generateIdeas, disable: isGeneratingStatus() || !rawInput().trim()">
-      <span data-bind="text: isGeneratingStatus() ? '抽出中...' : 'ネタを生成する'">ネタを生成する</span>
+      <span data-bind="text: generateButtonText"></span>
     </button>
   </div>
 
@@ -41,16 +41,19 @@
             </div>
             
             <div data-bind="if: isEditing">
-              <input type="text" class="edit-field" data-bind="value: text, hasFocus: isEditing" placeholder="ネタを修正...">
+              <input type="text" class="edit-field" data-bind="value: editText, hasFocus: isEditing" placeholder="ネタを修正...">
             </div>
           </div>
 
           <div class="item-actions">
             <button class="btn btn-outline btn-sm" 
-              data-bind="visible: !isEditing(), click: () => isEditing(true)">編集</button>
+              data-bind="visible: !isEditing() && !isSaved(), click: startEdit">編集</button>
               
             <button class="btn btn-save btn-sm" 
-              data-bind="visible: isEditing(), click: () => isEditing(false)">確定</button>
+              data-bind="visible: isEditing(), click: confirmEdit">確定</button>
+
+            <button class="btn btn-outline btn-sm" 
+              data-bind="visible: isEditing(), click: cancelEdit">戻す</button>
             <span class="badge-success" data-bind="visible: isSaved">保存済み</span>
           </div>
         </div>

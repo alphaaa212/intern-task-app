@@ -29,14 +29,17 @@
       </div>
 
       <div class="form-actions mt25 flex gap12">
-          <?php echo Form::submit('submit', '保存する', ['class' => 'btn btn-primary']); ?>
-          <?php echo Html::anchor('ideas/index', 'キャンセル', ['class' => 'btn btn-outline']); ?>
+          <?php echo Form::submit('submit', '保存する', array('class' => 'btn btn-primary')); ?>
+          <?php echo Html::anchor('ideas/index', 'キャンセル', array('id' => 'cancelBtn', 'class' => 'btn btn-outline')); ?>
       </div>
 
-<!-- </form> -->
+  <!-- </form> -->
   <?php echo Form::close(); ?>
-    </div>
   </div>
+</div>
+
+<?php echo Asset::js('jquery.min.js'); ?>
+<?php echo Asset::js('create.js'); ?>
 
 </body>
 </html>

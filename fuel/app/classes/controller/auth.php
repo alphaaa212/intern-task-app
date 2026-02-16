@@ -5,26 +5,6 @@ class Controller_Auth extends Controller
     // 登録画面表示(GET)
     public function action_register()
     {
-      // // セッションからエラーメッセージを取得（なければ空配列）
-      // $flash_errors = Session::get_flash('error',[]);
-      // $errors = [];
-
-      // // Validationオブジェクトが渡ってきた場合
-      // if ($flash_errors instanceof \Validation) {
-      //   // フィールド名をキーにして、エラーメッセージを格納する
-      //   foreach($flash_errors->error()as $field => $error){
-      //     // $error->get_message() で設定したメッセージ文字列を取得
-      //     $errors[$field] = $error->get_message();
-      //   }
-      // }
-
-      // // 文字列または配列で直接エラーが渡ってきた場合
-      // elseif (!empty($flash_errors)) {
-      //   $errors = is_array($flash_errors) ? $flash_errors : ['general' => $flash_errors];
-      // }
-
-      // // View::forgeで'views/auth/register.php'を読み込み、Responseオブジェクトとして返却（表示）
-      // // 2. View側がループ（foreach）を期待しているため、文字列の場合は配列に包む
       return Response::forge(View::forge('auth/register', ['errors' => []]));
     }
 

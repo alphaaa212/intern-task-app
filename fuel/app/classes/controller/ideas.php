@@ -132,10 +132,6 @@ class Controller_Ideas extends Controller_Base
     if (!\Security::check_token()) {
       return $this->ajax_response(['status' => 'error', 'message' => 'セッション切れです。ページを更新してください。'], 400);
     }
-    // // CSRFチェック
-    // if (!\Security::check_token()) {
-    //     return $this->ajax_response(['status' => 'error', 'message' => 'CSRF fail'], 400);
-    // }
 
     $id = \Input::post('id');
     $text = \Input::post('idea_text');
@@ -174,7 +170,6 @@ class Controller_Ideas extends Controller_Base
     if (!\Security::check_token()) {
       return $this->ajax_response(['status' => 'error', 'message' => 'セッション切れです。ページを更新してください。'], 400);
     }
-    // if (!\Security::check_token()) return $this->ajax_response(['status' => 'error'], 400);
 
     $id = \Input::post('id');
     if (!$this->get_owned_idea($id)) return $this->ajax_response(['status' => 'error'], 403);

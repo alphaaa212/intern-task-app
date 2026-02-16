@@ -6,6 +6,5 @@ return array(
 	'hello(/:name)?' => array('welcome/hello', 'name' => 'hello'),
 
 	'register' => 'auth/register',
-	// 'register' => 'auth/submit',
 	'login' => 'auth/login',
 );
